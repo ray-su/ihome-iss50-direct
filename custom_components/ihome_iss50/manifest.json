@@ -1,6 +1,7 @@
 {
   "domain": "ihome_iss50",
   "name": "iHome iSS50 Direct",
+  "categories": ["sensors"],
   "codeowners": [
     "@ray-su"
   ],
