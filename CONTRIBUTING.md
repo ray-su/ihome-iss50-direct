@@ -1,6 +1,6 @@
 # Contributing
 
-Use the Python version and commands in the README. Keep the runtime dependency in `manifest.json` aligned with the tested Home Assistant version and `requirements-dev.txt`. Do not upgrade aiohomekit independently without checking the HA version's own dependency and rerunning protocol tests.
+Use the Python version and commands in the README. The manifest uses an aiohomekit minimum version, as required by hassfest for dependencies shared with Home Assistant. Keep its minimum aligned with the tested HA baseline. `requirements-dev.txt` pins the versions actually tested; update those together and rerun protocol tests when changing the baseline.
 
 For protocol or lifecycle changes, add a test that demonstrates the affected behavior. Prefer the loopback HAP simulator for pairing, encrypted transport, and removal. Never point automated tests at a real device. State explicitly whether a result came from a simulator or physical hardware.
 
