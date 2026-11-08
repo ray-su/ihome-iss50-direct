@@ -1,0 +1,43 @@
+{
+  "title": "iHome iSS50 Direct",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect directly to your iSS50",
+        "description": "Enter the sensor’s IPv4 address and printed HomeKit code. Home Assistant pairs directly with the sensor; Apple Home is not required. Use port 80 if confirmed for your device, or 0 to search its TCP ports. The sensor must already be on Wi-Fi and available for pairing.",
+        "data": {
+          "host": "Sensor IP address",
+          "port": "HomeKit port (0 = automatic)",
+          "pin": "HomeKit pairing code"
+        }
+      },
+      "retry": {
+        "title": "Could not pair",
+        "description": "Check the error below. Continue to enter setup details again. Keep your existing integration entry when troubleshooting an already configured sensor."
+      },
+      "reconfigure": {
+        "title": "Update the sensor connection",
+        "description": "Change the IPv4 address or TCP port using the existing pairing credentials. The new endpoint is authenticated before saving. No new pairing code is needed.",
+        "data": {
+          "host": "Sensor IP address",
+          "port": "HomeKit port"
+        }
+      }
+    },
+    "progress": {
+      "connecting": "Finding the local HomeKit endpoint and pairing directly. This can take several minutes. Keep this window open."
+    },
+    "error": {
+      "invalid_input": "Enter a valid IPv4 address and an eight-digit HomeKit code.",
+      "cannot_pair": "Could not establish a direct HomeKit pairing. The endpoint may be blocked, already paired, or the code may be incorrect.",
+      "cannot_connect": "Cannot reach the sensor’s HomeKit endpoint. Check its IP address, port, and network access from Home Assistant.",
+      "already_paired": "The sensor rejected a new pairing or has no pairing slots available. It may already belong to another controller. Reload or reconfigure an existing HA entry instead of pairing again.",
+      "authentication_failed": "Authentication failed. For a new pairing, check the printed code. When reconfiguring, the saved keys must match this sensor.",
+      "pairing_busy": "The sensor is busy or limiting pairing attempts. Stop other setup attempts and wait before retrying.",
+      "invalid_endpoint": "Enter a valid IPv4 address and a port between 1 and 65535."
+    },
+    "abort": {
+      "already_configured": "This sensor is already configured."
+    }
+  }
+}

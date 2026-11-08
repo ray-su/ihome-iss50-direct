@@ -1,0 +1,16 @@
+{
+  "domain": "ihome_iss50",
+  "name": "iHome iSS50 Direct",
+  "codeowners": [
+    "@ray-su"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/ray-su/ihome-iss50-direct",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/ray-su/ihome-iss50-direct/issues",
+  "requirements": [
+    "aiohomekit==4.0.1"
+  ],
+  "version": "0.2.0"
+}

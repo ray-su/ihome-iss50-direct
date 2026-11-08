@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a setup, connection, or sensor-reading problem.
+body:
+  - type: markdown
+    attributes:
+      value: Never include pairing codes, pairing keys, access tokens, backups, or `.storage` files. Redact private network details from logs.
+  - type: input
+    id: integration_version
+    attributes:
+      label: Integration version
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant Core version
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include reproduction steps, expected behavior, model and firmware version if known.
+    validations:
+      required: true
+  - type: textarea
+    id: network
+    attributes:
+      label: Network and pairing context
+      description: Are HA and the sensor on the same VLAN? Which port is configured? Was the sensor previously paired? Do not include credentials.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant redacted logs
+      render: text
