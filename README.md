@@ -8,7 +8,7 @@ Connect an iHome **iSS50 SmartMonitor** directly to Home Assistant by IP address
 
 Home Assistant pairs with the sensor using the **HomeKit Accessory Protocol (HAP)** and its printed code. Apple Home, an Apple hub, and an iHome cloud account are not required during use. This is not a non-HomeKit protocol driver: it bypasses multicast discovery, not authentication or an existing controller's pairing.
 
-**Experimental:** temperature, humidity, light, and motion have been reported working on a physical iSS50 with version 0.2.0. The new sound behavior is simulator-tested and still needs physical-device confirmation. See [validation](VALIDATION.md).
+**Experimental:** temperature, humidity, light, and motion have been reported working on a physical iSS50 with version 0.2.0. After updating to 0.3.0, the user confirmed that the **Sound detection** entity appears in HA. Detected/clear transitions are simulator-tested but still await physical-device confirmation. See [validation](VALIDATION.md).
 
 ## Requirements
 
