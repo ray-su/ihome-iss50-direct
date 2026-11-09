@@ -2,7 +2,7 @@
 
 [![Validate](https://github.com/ray-su/ihome-iss50-direct/actions/workflows/validate.yml/badge.svg)](https://github.com/ray-su/ihome-iss50-direct/actions/workflows/validate.yml)
 [![Release](https://img.shields.io/github/v/release/ray-su/ihome-iss50-direct)](https://github.com/ray-su/ihome-iss50-direct/releases)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/docs/faq/custom_repositories/)
+[![Marketplace custom repository](https://img.shields.io/badge/Marketplace-Custom-orange.svg)](https://www.home-assistant.io/integrations/marketplace#custom-repositories)
 
 Connect an iHome **iSS50 SmartMonitor** directly to Home Assistant by IP address when HomeKit discovery does not find it.
 
@@ -19,24 +19,33 @@ Home Assistant pairs with the sensor using the **HomeKit Accessory Protocol (HAP
 
 If HA's built-in **HomeKit Device** integration discovers the sensor, prefer that supported integration. This custom integration is for manual-IP setup.
 
-## Install with HACS
+<!-- ha-marketplace:exclude-start -->
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ray-su&repository=ihome-iss50-direct&category=integration)
+## Install with Marketplace
+
+Home Assistant **2026.11** includes [Marketplace](https://www.home-assistant.io/integrations/marketplace), which replaces HACS. No separate HACS installation is needed. This project is a **custom repository**; add its link before installing.
+
+[![Open iHome iSS50 Direct in Home Assistant Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=ray-su&repository=ihome-iss50-direct&category=integration)
 
 Or add the repository manually:
 
-1. Open **HACS → ⋮ → Custom repositories**.
-2. Add `https://github.com/ray-su/ihome-iss50-direct` with category **Integration**.
-3. Find **iHome iSS50 Direct**, select it, and download the latest release.
-4. Restart Home Assistant.
-5. Open **Settings → Devices & services → Add integration → iHome iSS50 Direct**.
-6. Enter the sensor's IPv4 address, TCP port, and printed HomeKit code.
-
-This is a HACS **custom repository**, not a listing in HACS's default catalog.
+1. As an administrator, open **Settings → Marketplace** and acknowledge the first-use notice.
+2. Select **Add from link** and enter `https://github.com/ray-su/ihome-iss50-direct`.
+3. Connect GitHub if prompted, then select **Add**. If asked for a type, choose **Integration**.
+4. Open **iHome iSS50 Direct**, select **Install**, and confirm the version. Restart if prompted.
+5. Complete the setup that opens, or go to **Settings → Devices & services → Add integration → iHome iSS50 Direct**. Enter the sensor's IPv4 address, TCP port, and printed HomeKit code.
 
 ### Manual installation
 
 Download the release ZIP from [Releases](https://github.com/ray-su/ihome-iss50-direct/releases). Copy its `custom_components/ihome_iss50` directory into `/config/custom_components/`, then restart HA and add the integration. Do not nest the whole repository inside `custom_components`.
+
+<!-- ha-marketplace:exclude-end -->
+
+## Updates and existing installations
+
+Marketplace [automatically migrates existing HACS repositories](https://www.home-assistant.io/integrations/marketplace#coming-from-hacs). Keep your **iHome iSS50 Direct** integration entry; migration does not require reinstalling or pairing the sensor again.
+
+Install new releases through **Settings → Updates**, then restart Home Assistant to load the updated integration. Existing pairing credentials and entity IDs are preserved. Keep Marketplace's GitHub connection active for custom-repository update checks.
 
 ## Configuration
 
@@ -79,7 +88,7 @@ For an ambiguous firmware, **Download diagnostics** provides characteristic desc
 
 - **IP address or port changed:** open the integration entry's menu and choose **Reconfigure**. Enter the new address and known port. HA verifies the existing credentials against that endpoint before saving. Reconfiguration does not start a new pairing.
 - **Temporary connection failure:** reload the entry or wait for polling/setup retries. Keep the entry so its keys are preserved.
-- **Delete the integration:** when the device is reachable, HA attempts to remove its controller pairing from the sensor. Keep the device powered and reachable during deletion. If unpairing fails, HA still deletes the entry; restoring a backup or resetting the sensor may then be necessary. Deleting files through HACS without first deleting the integration entry does not unpair the device.
+- **Delete the integration:** when the device is reachable, HA attempts to remove its controller pairing from the sensor. Keep the device powered and reachable during deletion. If unpairing fails, HA still deletes the entry; restoring a backup or resetting the sensor may then be necessary. Marketplace requires removal of the configured integration before uninstalling its files, or offers **Delete and uninstall** to do both. Manually deleting files does not unpair the device.
 - **Cancel setup:** an in-progress pairing is allowed to finish and the flow attempts to retain successful credentials. A process crash, HA shutdown, or lost final pairing response can still prevent recovery. Do not intentionally interrupt pairing.
 
 ## Troubleshooting
@@ -106,6 +115,8 @@ python -m pytest -q
 ```
 
 Tests use a loopback-only HAP simulator; they do not contact real sensors. CI runs tests, Ruff, Home Assistant's hassfest, and the HACS repository validator. See [contributing](CONTRIBUTING.md) for release steps and [changelog](CHANGELOG.md) for changes.
+
+Marketplace still uses [`hacs.json` and the HACS validation action](https://contributors.home-assistant.io/marketplace/how-it-works/#before-home-assistant-202611). Their names are intentional; the repository layout and release process remain compatible.
 
 ## License and attribution
 

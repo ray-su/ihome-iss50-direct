@@ -8,6 +8,8 @@ Run Ruff, pytest, and the GitHub validation workflow before merging. Do not comm
 
 ## Releases
 
+Marketplace uses the existing `custom_components/ihome_iss50/` layout, root `hacs.json`, GitHub release tags, and HACS validation action. Keep these in place; do not rename `hacs.json` to `marketplace.json`. See the [Marketplace publisher documentation](https://contributors.home-assistant.io/marketplace/how-it-works/). Documentation-only changes do not require a new integration version or release tag.
+
 1. Update `custom_components/ihome_iss50/manifest.json`, `CHANGELOG.md`, and `RELEASE_NOTES.md`. Update `hacs.json` if the minimum HA version changes.
 2. Commit the changes and wait for all **Validate** jobs to pass on that commit.
 3. Create and push a matching version tag, for example `v0.2.0`.
