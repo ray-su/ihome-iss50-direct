@@ -20,6 +20,8 @@ def characteristic_summary(accessories):
                     "description",
                     "minValue",
                     "maxValue",
+                    "minStep",
+                    "unit",
                     "valid-values",
                 ):
                     if key in char:

@@ -1,13 +1,13 @@
-Sound detection support for existing iHome iSS50 Direct installations.
+Three device controls for iHome iSS50 Direct:
 
-**Update through Home Assistant's built-in Marketplace (Settings → Updates) and restart Home Assistant. Keep the existing integration entry; no re-pairing or Apple Home setup is required.**
+- **Display temperature units:** select Celsius (°C) or Fahrenheit (°F) for the physical LCD.
+- **Sound detection threshold:** adjust the raw device threshold (3–200 on the inspected iSS50).
+- **Motion silence duration:** adjust motion silence timing (1–120 on the inspected iSS50). This is not motion sensitivity; the duration unit has not yet been verified.
 
-- Creates a Sound detection binary sensor when the accessory clearly labels its custom sound field.
-- Receives live detection/clear events and uses polling as a fallback.
-- Adds Configure options for unnamed fields, inverted active states, and disabling sound support.
-- Preserves existing pairing credentials and entity IDs.
-- Adds a credential-free characteristic diagnostic export and correct full-UUID matching.
+**Update through Marketplace, restart Home Assistant, then open the iSS50 device’s Configuration section. Keep your existing integration entry; no re-pairing or Apple Home setup is required.** Select Celsius in the display control to change the LCD. Installation does not change settings automatically.
 
-**Compatibility:** no hardware-derived sound UUID is hard-coded. If the firmware does not label the field, select the sound source under the integration’s Configure options. Tested with synthetic custom HAP fields and encrypted simulator events; physical iSS50 sound behavior remains unverified. Sound detection is separate from occupancy and does not measure decibels.
+Controls use recognized writable fields, honor advertised limits, and read back values after each write. Rejected or unconfirmed writes report an error. Existing sensors and pairing credentials are preserved.
 
-Requires Home Assistant Core 2026.11.0 or newer. The attached ZIP is for manual installation; Marketplace installs directly from the release tag. For a new installation, follow the [Marketplace setup instructions](https://github.com/ray-su/ihome-iss50-direct#install-with-marketplace).
+The control identifiers, permissions, and ranges were verified from physical-device diagnostics. Encrypted writes/read-back were tested with a local HAP simulator; physical display and sensitivity/timing effects still need confirmation. Sound threshold values are not labelled as decibels, and motion duration values are not assigned an unverified time unit.
+
+Requires Home Assistant Core 2026.11.0 or newer. The attached ZIP is for manual installation; Marketplace installs from the release tag. See the [installation and device settings documentation](https://github.com/ray-su/ihome-iss50-direct#device-settings).

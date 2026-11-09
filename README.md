@@ -68,9 +68,25 @@ The integration stores authenticated controller credentials in HA's config entry
 | Occupancy | Standard readable occupancy characteristic |
 | Sound detection | A clearly labelled custom sound-detection field, or an explicitly selected field |
 
-Only characteristics actually exposed by the accessory become entities. Display settings, Wi-Fi provisioning, and firmware updates are not implemented. Sound detection reports detected/clear; it is not an audio recording or a decibel meter.
+Only characteristics actually exposed by the accessory become entities. Wi-Fi provisioning and firmware updates are not implemented. Sound detection reports detected/clear; it is not an audio recording or a decibel meter.
 
 The integration requests event notifications and reads each characteristic individually every 30 seconds as a fallback. Incoming events do not postpone fallback polling. Failed reads mark entities unavailable; successful later polls restore them.
+
+## Device settings
+
+Version **0.4.0** adds three controls under the iSS50 device’s **Configuration** section. Update through Marketplace and restart HA; keep the existing integration entry and pairing.
+
+| Control | Values | Purpose |
+| --- | --- | --- |
+| Display temperature units | Celsius (°C), Fahrenheit (°F) | Changes the physical iSS50 LCD. HA’s temperature entity keeps its own display-unit preference. |
+| Sound detection threshold | 3–200 on the inspected device | Adjusts the device’s sound trigger threshold. This is a raw device value, not a verified decibel measurement. |
+| Motion silence duration | 1–120 on the inspected device | Adjusts the device’s motion silence timing. It does not change motion sensitivity or detection range. The firmware’s duration unit has not yet been verified, so no seconds/minutes label is assumed. |
+
+To use Celsius on the device, select **Celsius (°C)** in **Display temperature units**. Installing this update does not change any device settings automatically.
+
+Controls appear only when the accessory exposes the recognized readable/writable fields. The integration respects the advertised limits, reads each setting back after writing, and polls for changes every 30 seconds. A rejected or unconfirmed write reports an error; the next successful read restores its displayed state. No Apple Home setup is needed.
+
+The setting identifiers, permissions, and ranges were observed in physical iSS50 diagnostics. Writes have been tested with an encrypted HAP simulator; physical LCD changes and threshold/timing effects still need confirmation. The diagnostics exporter now retains advertised units and step sizes when the firmware supplies them.
 
 ## Sound detection
 
@@ -80,7 +96,7 @@ The integration discovers custom readable sound-detection fields by their descri
 
 If a firmware exposes an unnamed field, open **Settings → Devices & services → iHome iSS50 Direct → Configure** and select the sound-detection source. Automatic is the default; Disabled turns this feature off. The detected value defaults to `1 / true` and can be inverted for firmware using `0 / false`. This changes only integration options and reloads the saved connection.
 
-No hardware-derived iSS50 sound UUID has been verified yet. Automatic detection therefore requires meaningful firmware labels; it does not assume that every unknown boolean means sound. Sensitivity, threshold, volume, and enable controls are excluded. Invalid values (including numbers other than 0 and 1) make the sound entity unavailable rather than reporting a false detection. Occupancy remains a separate entity.
+Automatic sound detection uses meaningful firmware labels instead of a hard-coded model-specific UUID; it does not assume that every unknown boolean means sound. Sensitivity, threshold, volume, and enable controls are excluded. Invalid values (including numbers other than 0 and 1) make the sound entity unavailable rather than reporting a false detection. Occupancy remains a separate entity.
 
 For an ambiguous firmware, **Download diagnostics** provides characteristic descriptions, IDs, formats, and numeric states to help identify the field. It omits the config entry, pairing keys, host address, and string values such as serial numbers. Review device-supplied descriptions before sharing diagnostics.
 

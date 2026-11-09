@@ -127,6 +127,41 @@ async def test_real_srp_pairing_encrypted_read_and_credential_restore(tmp_path):
     )
     sound_service.add_characteristic(sound)
     accessory.add_service(sound_service)
+    # Known setting UUIDs/ranges from diagnostics; device behavior is simulated.
+    settings = Service(UUID("CFC67791-48F2-4382-ACBE-294196CF5B70"), "Settings")
+    for name, uuid, fmt, lower, upper, initial in [
+        (
+            "Sound Detection Trigger Threshold",
+            "298A64ED-9BD6-4ADE-9697-F180CEACE5C4",
+            "int",
+            3,
+            200,
+            3,
+        ),
+        ("Temperature Display Units", "00000036-0000-1000-8000-0026BB765291", "uint8", 0, 1, 1),
+        (
+            "Motion Detector Silence Duration",
+            "B0FABCF0-8911-41BC-9159-CB0323E3D49D",
+            "int",
+            1,
+            120,
+            30,
+        ),
+    ]:
+        char = Characteristic(
+            name,
+            UUID(uuid),
+            {
+                "Format": fmt,
+                "Permissions": ["pr", "pw", "ev"],
+                "minValue": lower,
+                "maxValue": upper,
+                "minStep": 1,
+            },
+        )
+        char.set_value(initial)
+        settings.add_characteristic(char)
+    accessory.add_service(settings)
     driver.add_accessory(accessory)
     await driver.async_start()
     pairing = None
@@ -168,6 +203,51 @@ async def test_real_srp_pairing_encrypted_read_and_credential_restore(tmp_path):
                     if event.get(sound_key, {}).get("value") is detected:
                         break
         cancel_sound()
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+
+        from homeassistant.core import HomeAssistant
+
+        from custom_components.ihome_iss50 import ISS50Coordinator
+        from custom_components.ihome_iss50.controls import parse_controls
+        from custom_components.ihome_iss50.number import ISS50Number
+        from custom_components.ihome_iss50.select import ISS50DisplayUnits
+
+        controls, initial = parse_controls(database)
+        assert len(controls) == 3
+        coordinator = ISS50Coordinator(
+            HomeAssistant(str(tmp_path)),
+            SimpleNamespace(
+                unique_id="simulator", async_on_unload=Mock(), pref_disable_polling=False
+            ),
+            pairing,
+            [],
+            initial,
+            controls,
+        )
+        cancel_controls = pairing.dispatcher_connect(coordinator.on_event)
+        try:
+            for control in controls:
+                if control.kind == "display_units":
+                    entity = ISS50DisplayUnits(coordinator, control)
+                    await entity.async_select_option("celsius")
+                    assert entity.current_option == "celsius"
+                    expected = 0
+                else:
+                    entity = ISS50Number(coordinator, control)
+                    expected = 25 if control.kind == "sound_threshold" else 45
+                    await entity.async_set_native_value(expected)
+                    assert entity.native_value == expected
+                result = await pairing.get_characteristics([control.key])
+                assert result[control.key]["value"] == expected
+            # Reading after writes must retain settings without additional writes.
+            refreshed = await coordinator._async_update_data()
+            assert all(
+                refreshed[c.key]["value"] == coordinator.data[c.key]["value"] for c in controls
+            )
+        finally:
+            cancel_controls()
+            await coordinator.async_shutdown()
         # Reconfiguration verifies the saved keys without a new pair-setup.
         await p.validate_connection("127.0.0.1", port, data)
         await pairing.shutdown()

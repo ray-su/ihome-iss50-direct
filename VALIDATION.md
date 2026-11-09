@@ -1,5 +1,15 @@
 # Validation
 
+## Version 0.4.0
+
+Development baseline: Home Assistant **2026.11.0**, aiohomekit **4.0.1**, HAP-python **5.2.0**, Python **3.14**.
+
+Local result: **74 tests passed**; Ruff lint and formatting checks passed. The encrypted HAP simulator now exercises Celsius selection, sound threshold writes, and motion silence duration writes through the actual entity/coordinator path after restoring pairing credentials. It verifies read-back and subsequent polling. Focused tests cover invalid inputs, writable-field allowlisting, device limits, rejected writes, connection/read-back failures, optimistic callback suppression, and serialized polling/writing. No automated test contacts a real sensor.
+
+A fresh read-only diagnostic snapshot from a physical iSS50 confirms standard display-units characteristic `36` (0 = Celsius, 1 = Fahrenheit), sound threshold `298A64ED-9BD6-4ADE-9697-F180CEACE5C4` (3–200), and motion silence duration `B0FABCF0-8911-41BC-9159-CB0323E3D49D` (1–120), all with paired read/write permission. The captured export did not retain the duration unit, so it is not labelled as seconds or minutes. Motion sensitivity is not exposed in this snapshot.
+
+Physical LCD changes and sound-threshold/motion-timing effects have not yet been tested. Adding controls does not change settings automatically. Raw diagnostics, private identifiers, and pairing data are not included in the repository.
+
 ## Version 0.3.0
 
 Development baseline: Home Assistant **2026.11.0**, aiohomekit **4.0.1**, HAP-python **5.2.0**, Python **3.14**. Dependencies are pinned in `requirements-dev.txt`.

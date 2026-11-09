@@ -57,5 +57,16 @@
     "abort": {
       "not_loaded": "The sensor must be connected before configuring sound detection. Restore its connection and reload this integration, then try again."
     }
+  },
+  "entity": {
+    "select": {
+      "display_units": {
+        "name": "Display temperature units",
+        "state": {
+          "celsius": "Celsius (°C)",
+          "fahrenheit": "Fahrenheit (°F)"
+        }
+      }
+    }
   }
 }

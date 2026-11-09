@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 — 2026-11-08
+
+- Add a Celsius/Fahrenheit selector for the physical display.
+- Add sound detection threshold and motion silence duration number controls, using verified characteristic IDs and device-advertised bounds.
+- Preserve pairing and all existing entity IDs; never write settings automatically during setup.
+- Serialize polling and setting writes, verify values by reading them back, and handle rejected or unconfirmed writes.
+- Keep optional control failures from disabling standard sensor readings.
+- Include characteristic units and step sizes in diagnostics.
+- Add setting-validation, entity, error-handling, concurrency, and encrypted simulator write tests.
+
 ## 0.3.0 — 2026-11-08
 
 - Add a sound-detection binary sensor for clearly labelled custom HAP fields, including events and polling.
