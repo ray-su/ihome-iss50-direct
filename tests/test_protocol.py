@@ -89,8 +89,12 @@ async def test_full_scan_reports_no_endpoint(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_real_srp_pairing_encrypted_read_and_credential_restore(tmp_path):
+    from uuid import UUID
+
     from pyhap.accessory import Accessory
     from pyhap.accessory_driver import AccessoryDriver
+    from pyhap.characteristic import Characteristic
+    from pyhap.service import Service
 
     # Reserve an ephemeral port before the simulator binds.
     with socket.socket() as sock:
@@ -110,6 +114,19 @@ async def test_real_srp_pairing_encrypted_read_and_credential_restore(tmp_path):
     temp.configure_char("CurrentTemperature", value=23.5)
     humidity = accessory.add_preload_service("HumiditySensor")
     humidity.configure_char("CurrentRelativeHumidity", value=47)
+    # Synthetic vendor field tests the new discovery path without claiming a
+    # hardware-derived iSS50 UUID. Pairing is performed once, before restoration.
+    sound_service = Service(UUID("12345678-1234-5678-ABCD-123456789000"), "Sound Sensor")
+    sound = Characteristic(
+        "Sound Detected",
+        UUID("12345678-1234-5678-ABCD-123456789001"),
+        {
+            "Format": "bool",
+            "Permissions": ["pr", "ev"],
+        },
+    )
+    sound_service.add_characteristic(sound)
+    accessory.add_service(sound_service)
     driver.add_accessory(accessory)
     await driver.async_start()
     pairing = None
@@ -138,6 +155,19 @@ async def test_real_srp_pairing_encrypted_read_and_credential_restore(tmp_path):
                 if event.get(key, {}).get("value") == 51:
                     break
         cancel()
+        sound_key = by_kind["sound"].key
+        assert (await pairing.get_characteristics([sound_key]))[sound_key]["value"] is False
+        sound_updates = asyncio.Queue()
+        cancel_sound = pairing.dispatcher_connect(sound_updates.put_nowait)
+        await pairing.subscribe([sound_key])
+        for detected in (True, False):
+            sound.set_value(detected)
+            async with asyncio.timeout(5):
+                while True:
+                    event = await sound_updates.get()
+                    if event.get(sound_key, {}).get("value") is detected:
+                        break
+        cancel_sound()
         # Reconfiguration verifies the saved keys without a new pair-setup.
         await p.validate_connection("127.0.0.1", port, data)
         await pairing.shutdown()

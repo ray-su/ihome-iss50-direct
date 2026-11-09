@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — 2026-11-08
+
+- Add a sound-detection binary sensor for clearly labelled custom HAP fields, including events and polling.
+- Add automatic/manual/disabled sound-source options and active-state inversion without changing pairing credentials.
+- Keep sound separate from occupancy and exclude sensitivity/threshold/enable controls from automatic detection.
+- Fix full UUID matching so vendor UUID prefixes cannot impersonate standard HAP types.
+- Add a diagnostic characteristic export that omits config credentials and string values.
+- Add parser, binary-state, options, diagnostic-redaction, and encrypted sound-event tests.
+- Automatic discovery remains dependent on firmware labels; the tests use synthetic vendor UUIDs, not a physical iSS50 capture.
+
 ## 0.2.0 — 2026-11-08
 
 - Publish as a HACS custom repository with complete metadata, local brand assets, and installation documentation.

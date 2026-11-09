@@ -8,7 +8,7 @@ Connect an iHome **iSS50 SmartMonitor** directly to Home Assistant by IP address
 
 Home Assistant pairs with the sensor using the **HomeKit Accessory Protocol (HAP)** and its printed code. Apple Home, an Apple hub, and an iHome cloud account are not required during use. This is not a non-HomeKit protocol driver: it bypasses multicast discovery, not authentication or an existing controller's pairing.
 
-**Experimental:** automated tests cover a simulated HAP accessory and Home Assistant APIs. Successful pairing and all readings on a physical iSS50 remain unverified. See [validation](VALIDATION.md).
+**Experimental:** temperature, humidity, light, and motion have been reported working on a physical iSS50 with version 0.2.0. The new sound behavior is simulator-tested and still needs physical-device confirmation. See [validation](VALIDATION.md).
 
 ## Requirements
 
@@ -57,10 +57,23 @@ The integration stores authenticated controller credentials in HA's config entry
 | Illuminance | Standard readable light-level characteristic |
 | Motion | Standard readable motion characteristic |
 | Occupancy | Standard readable occupancy characteristic |
+| Sound detection | A clearly labelled custom sound-detection field, or an explicitly selected field |
 
-Only characteristics actually exposed by the accessory become entities. Proprietary sound detection, display settings, Wi-Fi provisioning, and firmware updates are not implemented.
+Only characteristics actually exposed by the accessory become entities. Display settings, Wi-Fi provisioning, and firmware updates are not implemented. Sound detection reports detected/clear; it is not an audio recording or a decibel meter.
 
 The integration requests event notifications and reads each characteristic individually every 30 seconds as a fallback. Incoming events do not postpone fallback polling. Failed reads mark entities unavailable; successful later polls restore them.
+
+## Sound detection
+
+After upgrading from 0.2.0, restart Home Assistant. Existing pairing credentials and entity IDs are preserved; **do not delete the integration or pair the sensor again**.
+
+The integration discovers custom readable sound-detection fields by their description (for example, `Sound Detected`) or an unambiguous sound service name. It adds a **Sound detection** binary sensor and subscribes to its events, with the same polling fallback as the other sensors.
+
+If a firmware exposes an unnamed field, open **Settings → Devices & services → iHome iSS50 Direct → Configure** and select the sound-detection source. Automatic is the default; Disabled turns this feature off. The detected value defaults to `1 / true` and can be inverted for firmware using `0 / false`. This changes only integration options and reloads the saved connection.
+
+No hardware-derived iSS50 sound UUID has been verified yet. Automatic detection therefore requires meaningful firmware labels; it does not assume that every unknown boolean means sound. Sensitivity, threshold, volume, and enable controls are excluded. Invalid values (including numbers other than 0 and 1) make the sound entity unavailable rather than reporting a false detection. Occupancy remains a separate entity.
+
+For an ambiguous firmware, **Download diagnostics** provides characteristic descriptions, IDs, formats, and numeric states to help identify the field. It omits the config entry, pairing keys, host address, and string values such as serial numbers. Review device-supplied descriptions before sharing diagnostics.
 
 ## Connection changes and removal
 

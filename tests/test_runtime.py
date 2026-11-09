@@ -108,3 +108,42 @@ async def test_removal_failure_does_not_log_credentials(monkeypatch, caplog):
     await async_remove_entry(None, entry)
     assert "Could not unpair" in caplog.text
     assert "sensitive-protocol-response" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_unreadable_custom_sound_does_not_break_other_sensors(tmp_path):
+    hass = HomeAssistant(str(tmp_path))
+    entry = SimpleNamespace(async_on_unload=Mock(), pref_disable_polling=False)
+    readings = [Reading(1, 11, "sound", True), Reading(1, 2, "temperature", True)]
+    pairing = SimpleNamespace(shutdown=AsyncMock(), subscribe=AsyncMock())
+    coordinator = ISS50Coordinator(hass, entry, pairing, readings, {})
+
+    async def read(keys):
+        if keys == [(1, 11)]:
+            raise ValueError("Unsupported firmware field")
+        return {(1, 2): {"value": 22}}
+
+    pairing.get_characteristics = read
+    try:
+        result = await coordinator._async_update_data()
+        assert result[(1, 11)]["status"] != 0
+        assert result[(1, 2)]["value"] == 22
+    finally:
+        await coordinator.async_shutdown()
+
+
+@pytest.mark.asyncio
+async def test_sound_subscription_failure_does_not_skip_other_sensors(tmp_path):
+    hass = HomeAssistant(str(tmp_path))
+    entry = SimpleNamespace(async_on_unload=Mock(), pref_disable_polling=False)
+    readings = [Reading(1, 11, "sound", True), Reading(1, 2, "temperature", True)]
+    pairing = SimpleNamespace(
+        shutdown=AsyncMock(), subscribe=AsyncMock(side_effect=[ValueError, None])
+    )
+    coordinator = ISS50Coordinator(hass, entry, pairing, readings, {})
+    try:
+        await coordinator._subscribe()
+        assert pairing.subscribe.await_count == 2
+        assert coordinator.subscribed is False
+    finally:
+        await coordinator.async_shutdown()

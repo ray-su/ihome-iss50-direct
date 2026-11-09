@@ -39,5 +39,23 @@
     "abort": {
       "already_configured": "This sensor is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Sound detection",
+        "description": "Automatic uses a clearly labelled sound field reported by the sensor. If your firmware leaves it unnamed, select its sound-detection field here. This reloads the integration using its existing pairing; no pairing code is needed. Sensitivity controls and sound levels are not sound-detection states.",
+        "data": {
+          "sound_characteristic": "Sound detection source",
+          "sound_active_value": "Detected value"
+        }
+      }
+    },
+    "error": {
+      "invalid_sound_mapping": "Choose an available sound source and a detected value of 0 or 1."
+    },
+    "abort": {
+      "not_loaded": "The sensor must be connected before configuring sound detection. Restore its connection and reload this integration, then try again."
+    }
   }
 }

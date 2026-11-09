@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -14,7 +15,8 @@ from aiohomekit.model.feature_flags import FeatureFlags
 from aiohomekit.model.status_flags import StatusFlags
 from aiohomekit.zeroconf import HomeKitService
 
-# Standard HAP characteristics; proprietary sound data is deliberately not guessed.
+# Standard HAP characteristics. Custom sound fields use their advertised labels
+# or an explicit user mapping; no unverified vendor UUID is hard-coded.
 KINDS = {
     "11": "temperature",
     "10": "humidity",
@@ -30,22 +32,122 @@ class Reading:
     iid: int
     kind: str
     events: bool
+    active_value: int = 1
 
     @property
     def key(self):
         return (self.aid, self.iid)
 
 
-def parse_readings(accessories: list[dict]) -> tuple[list[Reading], dict]:
-    readings, values = [], {}
+def standard_type(value) -> str | None:
+    """Return a short Apple HAP type without confusing vendor UUID prefixes."""
+    raw = str(value).upper()
+    if "-" in raw:
+        if not re.fullmatch(r"[0-9A-F]{8}-0000-1000-8000-0026BB765291", raw):
+            return None
+        raw = raw.split("-", 1)[0]
+    if not re.fullmatch(r"[0-9A-F]{1,8}", raw):
+        return None
+    return raw.lstrip("0") or "0"
+
+
+def _label(value) -> str:
+    return re.sub(r"[^a-z]", "", str(value or "").casefold())
+
+
+SOUND_LABELS = {
+    "sound",
+    "sounddetected",
+    "sounddetection",
+    "soundsensor",
+    "sounddetector",
+    "noisedetected",
+    "noisedetection",
+    "noisesensor",
+    "noisedetector",
+    "noise",
+    "audiodetected",
+    "audiodetection",
+}
+
+
+def _service_name(service: dict) -> str:
+    for char in service.get("characteristics", []):
+        if standard_type(char.get("type")) == "23":
+            return str(char.get("value", ""))
+    return str(service.get("description", ""))
+
+
+def _sound_candidate(char: dict) -> bool:
+    """Allow read-only custom boolean/integer fields, never settings or Apple status flags."""
+    perms = char.get("perms", [])
+    return (
+        standard_type(char.get("type")) is None
+        and "pr" in perms
+        and "pw" not in perms
+        and char.get("format") in {"bool", "uint8", "uint16", "uint32", "uint64", "int"}
+        and not any(
+            word in _label(char.get("description"))
+            for word in (
+                "sensitivity",
+                "threshold",
+                "enabled",
+                "level",
+                "volume",
+                "setting",
+            )
+        )
+    )
+
+
+def sound_candidates(accessories: list[dict]) -> dict[str, str]:
+    """Describe selectable custom fields without exposing pairing credentials."""
+    candidates = {}
     for accessory in accessories:
         for service in accessory.get("services", []):
             for char in service.get("characteristics", []):
-                raw = str(char.get("type", "")).upper().split("-")[0].lstrip("0")
-                if raw not in KINDS or "pr" not in char.get("perms", []):
+                if _sound_candidate(char):
+                    key = f"{accessory['aid']}.{char['iid']}"
+                    description = char.get("description") or _service_name(service) or char["type"]
+                    candidates[key] = f"{description} ({key})"
+    return candidates
+
+
+def parse_readings(
+    accessories: list[dict],
+    sound_characteristic: str = "auto",
+    sound_active_value: int = 1,
+) -> tuple[list[Reading], dict]:
+    readings, values = [], {}
+    for accessory in accessories:
+        for service in accessory.get("services", []):
+            candidates = [c for c in service.get("characteristics", []) if _sound_candidate(c)]
+            named_service = _label(_service_name(service)) in SOUND_LABELS
+            for char in service.get("characteristics", []):
+                if "pr" not in char.get("perms", []):
+                    continue
+                kind = KINDS.get(standard_type(char.get("type")))
+                key = f"{accessory['aid']}.{char['iid']}"
+                if _sound_candidate(char):
+                    description = _label(char.get("description"))
+                    auto_sound = description in SOUND_LABELS or (
+                        named_service
+                        and len(candidates) == 1
+                        and description
+                        in {"", "state", "detected", "detectionstate", "sensorstate"}
+                    )
+                    if sound_characteristic == key or (
+                        sound_characteristic == "auto" and auto_sound
+                    ):
+                        kind = "sound"
+                if kind is None:
                     continue
                 item = Reading(
-                    accessory["aid"], char["iid"], KINDS[raw], "ev" in char.get("perms", [])
+                    accessory["aid"],
+                    char["iid"],
+                    kind,
+                    "ev" in char.get("perms", []),
+                    active_value=sound_active_value if kind == "sound" else 1,
                 )
                 readings.append(item)
                 if "value" in char:

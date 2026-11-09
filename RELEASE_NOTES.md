@@ -1,11 +1,13 @@
-Initial public HACS release of iHome iSS50 Direct.
+Sound detection support for existing iHome iSS50 Direct installations.
 
-- Install as a HACS custom repository: `https://github.com/ray-su/ihome-iss50-direct`, category **Integration**.
-- Requires Home Assistant Core **2026.11.0+**. Restart HA after installation and add **iHome iSS50 Direct**.
-- Direct-IP pairing uses the HomeKit protocol with HA as the controller. Apple Home is not required.
-- Includes saved-key IP/port reconfiguration, polling fixes, best-effort unpairing on removal, and clearer setup errors.
-- Includes automated protocol/coordinator tests and HACS/hassfest validation workflows.
+**Update through HACS and restart Home Assistant. Keep the existing integration entry; no re-pairing or Apple Home setup is required.**
 
-**Experimental:** simulator-tested; successful physical iSS50 pairing and complete sensor readings are not yet verified. Proprietary sound detection is not implemented. Back up HA before setup and retain the config entry when troubleshooting.
+- Creates a Sound detection binary sensor when the accessory clearly labels its custom sound field.
+- Receives live detection/clear events and uses polling as a fallback.
+- Adds Configure options for unnamed fields, inverted active states, and disabling sound support.
+- Preserves existing pairing credentials and entity IDs.
+- Adds a credential-free characteristic diagnostic export and correct full-UUID matching.
 
-The ZIP is for manual installation: copy `custom_components/ihome_iss50` into `/config/custom_components/`. HACS installs the integration directory directly from this release's tag.
+**Compatibility:** no hardware-derived sound UUID is hard-coded. If the firmware does not label the field, select the sound source under the integration’s Configure options. Tested with synthetic custom HAP fields and encrypted simulator events; physical iSS50 sound behavior remains unverified. Sound detection is separate from occupancy and does not measure decibels.
+
+Requires Home Assistant Core 2026.11.0 or newer. The attached ZIP is for manual installation; HACS installs directly from the release tag.

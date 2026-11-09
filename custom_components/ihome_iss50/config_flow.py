@@ -16,10 +16,11 @@ from aiohomekit.exceptions import (
     UnavailableError,
 )
 from homeassistant import config_entries
+from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .const import DOMAIN
-from .protocol import find_port, pair_direct, validate_connection
+from .protocol import find_port, pair_direct, sound_candidates, validate_connection
 
 
 def error_key(error):
@@ -37,6 +38,11 @@ def error_key(error):
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        return SoundOptionsFlow()
 
     def __init__(self):
         self._task = None
@@ -165,3 +171,60 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(user_input["pairing"]["AccessoryPairingID"].lower())
         self._abort_if_unique_id_configured()
         return self.async_create_entry(title="iHome iSS50", data=user_input)
+
+
+class SoundOptionsFlow(config_entries.OptionsFlowWithReload):
+    """Select a firmware-specific sound field without modifying pairing keys."""
+
+    async def async_step_init(self, user_input=None):
+        entry = self.config_entry
+        coordinator = self.hass.data.get(DOMAIN, {}).get(entry.entry_id)
+        if coordinator is None:
+            return self.async_abort(reason="not_loaded")
+        choices = {"auto": "Automatic", "disabled": "Disabled"}
+        choices.update(sound_candidates(coordinator.accessories))
+        errors = {}
+        if user_input:
+            selected = user_input.get("sound_characteristic", "auto")
+            active = user_input.get("sound_active_value", "1")
+            if selected not in choices or active not in ("0", "1"):
+                errors["base"] = "invalid_sound_mapping"
+            else:
+                return self.async_create_entry(
+                    title="",
+                    data={
+                        **entry.options,
+                        "sound_characteristic": selected,
+                        "sound_active_value": int(active),
+                    },
+                )
+        current = entry.options.get("sound_characteristic", "auto")
+        if current not in choices:
+            # Keep an old mapping visible if firmware temporarily omits it.
+            choices[current] = f"Previously selected field ({current})"
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("sound_characteristic", default=current): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=[
+                                {"value": key, "label": value} for key, value in choices.items()
+                            ]
+                        )
+                    ),
+                    vol.Required(
+                        "sound_active_value",
+                        default=str(entry.options.get("sound_active_value", 1)),
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=[
+                                {"value": "1", "label": "1 / true means sound detected"},
+                                {"value": "0", "label": "0 / false means sound detected"},
+                            ]
+                        )
+                    ),
+                }
+            ),
+            errors=errors,
+        )

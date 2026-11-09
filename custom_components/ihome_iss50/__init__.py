@@ -35,8 +35,15 @@ class ISS50Coordinator(DataUpdateCoordinator):
         try:
             # Read one at a time: older iHome firmware can fail large batches.
             for item in self.readings:
-                response = await self.pairing.get_characteristics([item.key])
-                values[item.key] = response.get(item.key, {"status": -70402})
+                try:
+                    response = await self.pairing.get_characteristics([item.key])
+                    values[item.key] = response.get(item.key, {"status": -70402})
+                except Exception:
+                    if item.kind != "sound":
+                        raise
+                    # Optional custom firmware fields must not disable the
+                    # established standard sensors when a read is rejected.
+                    values[item.key] = {"status": -70402}
             if not self.subscribed:
                 await self._subscribe()
             # Events received during an awaited read are newer than the snapshot
@@ -52,13 +59,14 @@ class ISS50Coordinator(DataUpdateCoordinator):
         if not events:
             self.subscribed = True
             return
-        try:
-            for key in events:
+        self.subscribed = True
+        for key in events:
+            try:
                 await self.pairing.subscribe([key])
-            self.subscribed = True
-        except Exception:
-            # Polling remains active when this firmware rejects notifications.
-            self.subscribed = False
+            except Exception:
+                # Continue subscribing to the other fields. Polling remains
+                # active when this firmware rejects some notifications.
+                self.subscribed = False
 
     def on_event(self, changes):
         if changes:
@@ -80,13 +88,18 @@ async def async_setup_entry(hass, entry):
     pairing = load_pairing(entry.data["host"], entry.data["port"], entry.data["pairing"])
     try:
         accessories = await pairing.list_accessories_and_characteristics()
-        readings, values = parse_readings(accessories)
+        readings, values = parse_readings(
+            accessories,
+            sound_characteristic=entry.options.get("sound_characteristic", "auto"),
+            sound_active_value=entry.options.get("sound_active_value", 1),
+        )
         if not readings:
             raise ValueError("No supported sensor characteristics")
     except Exception as err:
         await pairing.shutdown()
         raise ConfigEntryNotReady("Cannot read iHome accessory database") from err
     coordinator = ISS50Coordinator(hass, entry, pairing, readings, values)
+    coordinator.accessories = accessories
     coordinator.cancel_events = pairing.dispatcher_connect(coordinator.on_event)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     try:

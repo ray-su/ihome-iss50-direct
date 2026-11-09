@@ -1,13 +1,18 @@
 # Validation
 
-## Version 0.2.0
+## Version 0.3.0
 
 Development baseline: Home Assistant **2026.11.0**, aiohomekit **4.0.1**, HAP-python **5.2.0**, Python **3.14**. Dependencies are pinned in `requirements-dev.txt`.
 
-Local result on 2026-11-08: **20 tests passed**. Ruff lint and formatting checks passed.
+Local result on 2026-11-08: **47 tests passed**. Ruff lint and formatting checks passed.
+
+Sound tests use explicitly synthetic vendor UUIDs. They verify label-based discovery and explicit field selection, not a reverse-engineered iSS50 UUID. Physical sound compatibility remains unverified.
 
 The automated suite checks:
 
+- Sound discovery by characteristic/service descriptions; settings and ambiguous fields are excluded.
+- Binary sound-state validation, polarity, credential-preserving options, and diagnostic redaction.
+- Encrypted sound detected/clear events after restoring saved pairing keys.
 - Real TCP HAP detection and rejection of ordinary web servers.
 - Standard sensor-characteristic parsing and read permissions.
 - Port-search success/failure and worker cleanup.
@@ -24,7 +29,7 @@ GitHub Actions runs the suite, Ruff checks, hassfest, and HACS validation. Check
 
 ## Hardware limits
 
-No successful pairing or complete sensor readout has been verified on a physical iSS50. Simulator success does not establish legacy-firmware compatibility, Wi-Fi provisioning behavior, or network reachability from a user's HA installation. No replacement firmware or proprietary protocol support is claimed.
+A user reported working temperature, humidity, light, and motion readings on a physical iSS50 using version 0.2.0. The 0.3.0 sound changes have not yet been confirmed on that hardware. Simulator success does not establish the actual vendor UUID, firmware labels, Wi-Fi provisioning behavior, or compatibility with every firmware version. No replacement firmware support is claimed.
 
 ## Original archive
 
